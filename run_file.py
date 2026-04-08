@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
-import numpy as np
 from ydata_profiling import ProfileReport
 
 st.set_page_config(page_title="EDA App", layout="wide")
