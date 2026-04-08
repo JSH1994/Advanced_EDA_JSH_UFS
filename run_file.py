@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
-from ydata_profiling import ProfileReport
+import sweetviz as sv
+import tempfile
+from pathlib import Path
 
 st.set_page_config(page_title="EDA App", layout="wide")
+st.title("Exploratory Data Analysis")
 
-st.title("Exploratory Data Analysis (EDA)")
-
-# Upload CSV file
 uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
 
 if uploaded_file is not None:
@@ -15,30 +14,31 @@ if uploaded_file is not None:
 
     st.success("File uploaded successfully")
 
-    # Preview
-    st.subheader("Data Preview")
+    st.subheader("Data preview")
     st.dataframe(df.head())
 
-    # Basic info
-    st.subheader("Dataset Information")
-    st.write(f"Rows: {df.shape[0]}, Columns: {df.shape[1]}")
-    st.write("Data Types:")
-    st.write(df.dtypes)
+    st.subheader("Dataset information")
+    st.write(f"Rows: {df.shape[0]}")
+    st.write(f"Columns: {df.shape[1]}")
+    st.write("Data types:")
+    st.dataframe(df.dtypes.astype(str).rename("dtype"))
 
-    # Missing values
-    st.subheader("Missing Values")
-    st.write(df.isnull().sum())
+    st.subheader("Missing values")
+    st.dataframe(df.isnull().sum().rename("missing_values"))
 
-    # Summary statistics
-    st.subheader("Summary Statistics")
-    st.dataframe(df.describe())
+    st.subheader("Summary statistics")
+    st.dataframe(df.describe(include="all"))
 
-    # Profiling report
-    st.subheader("Full EDA Report")
+    st.subheader("Sweetviz report")
 
     with st.spinner("Generating report..."):
-        profile = ProfileReport(df, explorative=True)
-        st.components.v1.html(profile.to_html(), height=1000, scrolling=True)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            report_path = Path(tmp_dir) / "sweetviz_report.html"
+            report = sv.analyze(df)
+            report.show_html(filepath=str(report_path), open_browser=False)
 
+            html = report_path.read_text(encoding="utf-8")
+
+        st.components.v1.html(html, height=1200, scrolling=True)
 else:
     st.info("Please upload a CSV file to begin.")
